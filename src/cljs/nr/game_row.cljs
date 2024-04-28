@@ -148,8 +148,26 @@
     {:minutes minutes :seconds seconds}))
 
 (defn game-time [game]
-  [:span.game-time (str (time-since (:date game)))]
-   )
+  "Component which displays a readout of the time since the start of the match."
+  (let [duration (r/atom nil)
+        interval (r/atom nil)]
+      (r/create-class
+      {:component-did-mount
+       (fn []
+         (reset! interval
+                 ;; Update timer at most every 1 sec
+                 (js/setInterval #(reset! duration (time-since (:date game))) 1000)))
+       :component-will-unmount
+       (fn []
+         (js/clearInterval @interval)
+         (reset! interval nil))
+       :reagent-render
+       (fn []
+         ([:span.game-time
+            (str
+              (:minutes @duration) "m:"
+              (:seconds @duration) "s")])
+         )})))
 
 (defn players-row [{players :players :as game}]
   (into
